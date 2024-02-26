@@ -38,7 +38,7 @@ class ExpectedResult:
 
 		if not expected_success:
 			if actual_stderr == None or actual_stderr == "":
-				print("====> WARNING: Standard error output is empty.")
+				raise ValueError("Standard error output is empty.")
 			if actual_stdout != None and actual_stdout != "":
 				raise ValueError("On error program should not writing anything to standard output.")
 			return
