@@ -2,6 +2,7 @@ import subprocess
 import hashlib
 import os
 import difflib
+import time
 
 # Constants.
 
@@ -63,13 +64,24 @@ class TestResult(ExpectedResult):
 	def __init__(self, stdout, stderr, return_code):
 		ExpectedResult.__init__(self, stdout = stdout, stderr = stderr, is_success = (return_code == EXIT_SUCCESS))
 
+class GroupResult():
+	def __init__(self, passed, total, name, timer):
+		self.passed = passed
+		self.total = total
+		self.name = name
+		self.timer = timer
+
+	def __str__(self):
+		return "Group %s: %d/%d tests passed in %d ms" % (self.name, self.passed, self.total, self.timer)
+
 ## Tests.
 
 class IOTest:
-	def __init__(self, input, expected_result, timeout = DEFAULT_TIMEOUT):
+	def __init__(self, input, expected_result, timeout = DEFAULT_TIMEOUT, name = None):
 		self.input = (' '.join(input) + "\n").encode("ascii")
 		self.expected_result = expected_result
 		self.timeout = timeout
+		self.name = name
 
 	def run(self, filename):
 		executable = os.path.abspath(filename)
@@ -83,11 +95,15 @@ class IOTest:
 		except subprocess.TimeoutExpired:
 			raise ValueError("Timeout.")
 
+	def about(self):
+		return self.name
+
 class CmdTest:
-	def __init__(self, input, expected_result, timeout = DEFAULT_TIMEOUT):
+	def __init__(self, input, expected_result, timeout = DEFAULT_TIMEOUT, name = None):
 		self.input = input
 		self.expected_result = expected_result
 		self.timeout = timeout
+		self.name = name
 
 	def run(self, filename):
 		executable = os.path.abspath(filename)
@@ -101,20 +117,28 @@ class CmdTest:
 		except subprocess.TimeoutExpired:
 			raise ValueError("Timeout.")
 
+	def about(self):
+		return self.name
+
 ## Testers.
 
 class IOTester:
-	def __init__(self, groupname, filename):
-		self.groupname = groupname
+	def __init__(self, name, filename):
+		self.groupname = name
 		self.filename = filename
 		self.tests = []
 
 	def run(self):
 		passed = 0
+		start = time.time_ns() // 1000000
 		print("=> Test suite: %s tests." % self.groupname)
 		for i, test in enumerate(self.tests):
 			try:
-				print("==> Running test %d" % (i + 1))
+				name = test.about()
+				if name:
+					print("==> Running test \"%s\"" % (name))
+				else:
+					print("==> Running test %d" % (i + 1))
 				test.run(self.filename)
 				print("===> SUCCESS")
 				passed += 1
@@ -124,34 +148,37 @@ class IOTester:
 			except Exception as err:
 				print("===> FAILED WITH UNKNOWN ERROR")
 				print(err)
-		return passed
+		end = time.time_ns() // 1000000
+		return GroupResult(passed, len(self.tests), self.groupname, end - start)
 
-	def add_fail(self, input, timeout = DEFAULT_TIMEOUT):
-		self.add_easy(input, None, timeout)
+	def add_fail(self, input, timeout = DEFAULT_TIMEOUT, name = None):
+		self.add_easy(input, None, timeout, name)
 
-	def add_easy(self, input, expected, timeout = DEFAULT_TIMEOUT):
+	def add_easy(self, input, expected, timeout = DEFAULT_TIMEOUT, name = None):
 		expected = ExpectedResult(expected, is_success = expected != None)
-		self.tests.append(IOTest(input, expected, timeout))
+		self.tests.append(IOTest(input, expected, timeout, name))
 
-	def add_hard(self, input, expected, timeout = DEFAULT_TIMEOUT):
+	def add_hard(self, input, expected, timeout = DEFAULT_TIMEOUT, name = None):
 		expected = ExpectedResult(expected, is_sha256 = True)
-		self.tests.append(IOTest(input, expected, timeout))
-
-	def total(self):
-		return len(self.tests)
+		self.tests.append(IOTest(input, expected, timeout, name))
 
 class CmdTester:
-	def __init__(self, groupname, filename):
-		self.groupname = groupname
+	def __init__(self, name, filename):
+		self.groupname = name
 		self.filename = filename
 		self.tests = []
 
 	def run(self):
 		passed = 0
+		start = time.time_ns() // 1000000
 		print("=> Test suite: %s tests." % self.groupname)
 		for i, test in enumerate(self.tests):
 			try:
-				print("==> Running test %d" % (i + 1))
+				name = test.about()
+				if name:
+					print("==> Running test \"%s\"" % (name))
+				else:
+					print("==> Running test %d" % (i + 1))
 				test.run(self.filename)
 				print("===> SUCCESS")
 				passed += 1
@@ -161,18 +188,16 @@ class CmdTester:
 			except Exception as err:
 				print("===> FAILED WITH UNKNOWN ERROR")
 				print(err)
-		return passed
+		end = time.time_ns() // 1000000
+		return GroupResult(passed, len(self.tests), self.groupname, end - start)
 
-	def add_fail(self, input, timeout = DEFAULT_TIMEOUT):
-		self.add_easy(input, None, timeout)
+	def add_fail(self, input, timeout = DEFAULT_TIMEOUT, name = None):
+		self.add_easy(input, None, timeout, name)
 
-	def add_easy(self, input, expected, timeout = DEFAULT_TIMEOUT):
+	def add_easy(self, input, expected, timeout = DEFAULT_TIMEOUT, name = None):
 		expected = ExpectedResult(expected, is_success = expected != None)
-		self.tests.append(CmdTest(input, expected, timeout))
+		self.tests.append(CmdTest(input, expected, timeout, name))
 
-	def add_hard(self, input, expected, timeout = DEFAULT_TIMEOUT):
+	def add_hard(self, input, expected, timeout = DEFAULT_TIMEOUT, name = None):
 		expected = ExpectedResult(expected, is_sha256 = True)
-		self.tests.append(CmdTest(input, expected, timeout))
-
-	def total(self):
-		return len(self.tests)
+		self.tests.append(CmdTest(input, expected, timeout, name))
