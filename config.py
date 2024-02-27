@@ -1,0 +1,5 @@
+# Constants.
+
+EXIT_SUCCESS = 0
+EXIT_FAILURE = 1
+DEFAULT_TIMEOUT = 1
