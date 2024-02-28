@@ -1,6 +1,7 @@
 import os
 import subprocess
 import time
+from typing import List
 
 from suite import config
 from suite import asserts
@@ -9,11 +10,11 @@ from suite import results
 # Tests.
 
 class IOTest:
-	def __init__(self, input, expected_result: asserts.Expected, timeout: int = config.DEFAULT_TIMEOUT, name: str = None):
+	def __init__(self, input: str, expected_result: asserts.Expected, timeout: int = config.DEFAULT_TIMEOUT, name: str = None):
 		self.input = (' '.join(input) + "\n").encode("ascii")
 		self.expected_result = expected_result
-		self.timeout: int = timeout
-		self.name: str = name
+		self.timeout = timeout
+		self.name = name
 
 	def run(self, filename: str):
 		executable = os.path.abspath(filename)
@@ -23,13 +24,13 @@ class IOTest:
 			output, error = program.communicate(self.input.decode("utf-8"), timeout = self.timeout)
 			end = time.time_ns() // 1000000
 			result = asserts.Actual(output, error, program.returncode)
-			return self.expected_result.compare(result, end - start, self.name, self.input)
+			return self.expected_result.compare(result, end - start, self.name, self.input.decode("ascii"))
 		except subprocess.TimeoutExpired:
 			end = time.time_ns() // 1000000
-			return results.TestResult(False, self.name, self.expected_result.is_success, self.input, None, self.expected_result.stdout, self.expected_result.is_success != True, end - start, "Timeout.")
+			return results.TestResult(False, self.name, self.expected_result.is_success, self.input.decode("ascii"), None, self.expected_result.stdout, self.expected_result.is_success != True, end - start, "Timeout.")
 
 class CmdTest:
-	def __init__(self, input, expected_result: asserts.Expected, timeout: int = config.DEFAULT_TIMEOUT, name: str = None):
+	def __init__(self, input: List[str], expected_result: asserts.Expected, timeout: int = config.DEFAULT_TIMEOUT, name: str = None):
 		self.input = input
 		self.expected_result = expected_result
 		self.timeout = timeout
@@ -43,7 +44,7 @@ class CmdTest:
 			output, error = program.communicate(timeout = self.timeout)
 			end = time.time_ns() // 1000000
 			result = asserts.Actual(output, error, program.returncode)
-			return self.expected_result.compare(result, end - start, self.name, self.input)
+			return self.expected_result.compare(result, end - start, self.name, (' '.join(self.input) + "\n"))
 		except subprocess.TimeoutExpired:
 			end = time.time_ns() // 1000000
-			return results.TestResult(False, self.name, self.expected_result.is_success, self.input, None, self.expected_result.stdout, self.expected_result.is_success != True, end - start, "Timeout.")
+			return results.TestResult(False, self.name, self.expected_result.is_success, (' '.join(self.input) + "\n"), None, self.expected_result.stdout, self.expected_result.is_success != True, end - start, "Timeout.")

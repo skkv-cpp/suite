@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Union
 
 from suite import config
 from suite import asserts
@@ -8,14 +8,14 @@ from suite import results
 # Testers.
 
 class Tester:
-	def __init__(self, category, filename, ctor):
+	def __init__(self, category: str, filename: str, ctor: 'Tester'):
 		self.category = category
 		self.filename = filename
 		self.tests = []
 		self.ctor = ctor
 
 	def run(self):
-		result = []
+		result: List[results.TestResult] = []
 		print("=> Test suite: %s tests." % self.category)
 		for i, test in enumerate(self.tests):
 			try:
@@ -25,7 +25,7 @@ class Tester:
 				else:
 					name = str(i + 1)
 					print("==> Running test %d" % (i + 1))
-				test_result = test.run(self.filename)
+				test_result: results.TestResult = test.run(self.filename)
 				if test_result.passed:
 					print("===> SUCCESS")
 				else:
@@ -38,14 +38,14 @@ class Tester:
 				exit(config.EXIT_FAILURE)
 		return results.CategoryResult(result, self.category)
 
-	def add_fail(self, input, expected_exitcode: int, timeout: int = config.DEFAULT_TIMEOUT, name: str = None):
+	def add_fail(self, input: Union[List[str], str], expected_exitcode: int, timeout: int = config.DEFAULT_TIMEOUT, name: str = None):
 		self.add_easy(input, None, expected_exitcode, timeout, name)
 
-	def add_easy(self, input, expected: str, expected_exitcode: int = 0, timeout: int = config.DEFAULT_TIMEOUT, name: str = None):
+	def add_easy(self, input: Union[List[str], str], expected: str, expected_exitcode: int = 0, timeout: int = config.DEFAULT_TIMEOUT, name: str = None):
 		expected = asserts.Expected(expected, is_success = expected != None, exitcode = expected_exitcode)
 		self.tests.append(self.ctor(input, expected, timeout, name))
 
-	def add_hard(self, input, expected, expected_exitcode: int = 0,timeout: int = config.DEFAULT_TIMEOUT, name: str = None):
+	def add_hard(self, input: Union[List[str], str], expected: str, expected_exitcode: int = 0, timeout: int = config.DEFAULT_TIMEOUT, name: str = None):
 		expected = asserts.Expected(expected, is_sha256 = True, exitcode = expected_exitcode)
 		self.tests.append(self.ctor(input, expected, timeout, name))
 
