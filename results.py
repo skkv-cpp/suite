@@ -77,7 +77,7 @@ class TestResult():
 		self.__print_str(self.expected_output, width, end)
 
 	def print_empty_error(self, width: str, end = False):
-		self.__print_bool(self.passed, TestResult.STR_EMPTY_ERROR_TRUE, TestResult.STR_EMPTY_ERROR_FALSE, width, end)
+		self.__print_bool(self.empty_error, TestResult.STR_EMPTY_ERROR_TRUE, TestResult.STR_EMPTY_ERROR_FALSE, width, end)
 
 	def print_exitcode(self, width: str, end = False):
 		self.__print_str(str(self.exitcode), width, end)
