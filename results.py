@@ -24,22 +24,22 @@ class TestResult():
 	STR_EMPTY_ERROR_FALSE: str = "<not empty>"
 
 	def __init__(self, passed: bool, name: str, is_success: bool, input: str, actual_output: str, expected_output: str, empty_error: bool, timer: int, exitcode: int, error_message: str = None):
-		self.passed: bool = passed
-		self.name: str = "<no name>"
+		self.passed = passed
+		self.name = "<no name>"
 		if name:
 			self.name = name
-		self.is_success: bool = is_success
-		self.input: str = escape(input)
-		self.actual_output: str = "<no output>"
+		self.is_success = is_success
+		self.input = escape(input)
+		self.actual_output = "<no output>"
 		if actual_output:
-			self.actual_output: str = escape(actual_output)
-		self.expected_output: str = "<no reference>"
+			self.actual_output = escape(actual_output)
+		self.expected_output = "<no reference>"
 		if expected_output:
-			self.expected_output: str = escape(expected_output)
-		self.empty_error: bool = empty_error
-		self.timer: int = timer
-		self.exitcode: int = exitcode
-		self.error_message: str = error_message
+			self.expected_output = escape(expected_output)
+		self.empty_error = empty_error
+		self.timer = timer
+		self.exitcode = exitcode
+		self.error_message = error_message
 
 	def __print_end(self, end: bool):
 		if end:
