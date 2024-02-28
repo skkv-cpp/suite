@@ -27,42 +27,34 @@ class Expected:
 		actual_exitcode = other.exitcode
 
 		if not expected_success and actual_success:
-			return results.TestResult(False, name, expected_success, stdin, actual_stdout, expected_stdout, expected_success != True, timer, "Program returns ERROR_CODE = 0.")
+			return results.TestResult(False, name, expected_success, stdin, actual_stdout, expected_stdout, expected_success != True, timer, actual_exitcode, "Program returns ERROR_CODE = 0.")
 
 		if expected_success and not actual_success:
 			return results.TestResult(False, name,
                               expected_success, stdin, actual_stdout,
                               expected_stdout, expected_success != True,
-                              timer, actual_exitcode,
-                              "Program should not fail, returns ERROR_CODE != 0."
-                )
+                              timer, actual_exitcode, error_message = "Program should not fail, returns ERROR_CODE != 0.")
 
 		if not expected_success:
 			if actual_stderr == None or actual_stderr == "":
 				return results.TestResult(False, name,
                             expected_success, stdin, actual_stdout,
                             expected_stdout, expected_success != True,
-                            timer, actual_exitcode,
-                            "Standard error output is empty."
-                )
+                            timer, actual_exitcode, "Standard error output is empty.")
 			if actual_stdout != None and actual_stdout != "":
 				return results.TestResult(False, name,
                               expected_success, stdin, actual_stdout,
                               expected_stdout, expected_success != True,
-                              timer, actual_exitcode,
-                              "On error program should not writing anything to standard output."
-                )
+                              timer, actual_exitcode, "On error program should not writing anything to standard output.")
 			if actual_exitcode != expected_exitcode:
 				return results.TestResult(False, name,
                               expected_success, stdin, actual_stdout,
                               expected_stdout, expected_success != True,
-                              timer, actual_exitcode,
-                              "Program returns %d, but should return %d." % (actual_exitcode, expected_exitcode)
-                )
+                              timer, actual_exitcode, "Program returns %d, but should return %d." % (actual_exitcode, expected_exitcode))
 			return results.TestResult(True, name,
                              expected_success, stdin, actual_stdout,
                              expected_stdout, expected_success != True,
-                             timer, None
+                             timer, actual_exitcode
             )
 
 		if expected_sha256:
@@ -71,15 +63,12 @@ class Expected:
 				return results.TestResult(False, name,
                               expected_success, stdin, actual_stdout,
                               expected_stdout, expected_success != True,
-                              timer, actual_exitcode,
-                              "SHA-256 from expected output (%s) not equals to actual (%s)." % (expected_stdout, actual_stdout)
-                )
+                              timer, actual_exitcode, "SHA-256 from expected output (%s) not equals to actual (%s)." % (expected_stdout, actual_stdout))
 			else:
 				return results.TestResult(True, name,
                               expected_success, stdin, actual_stdout,
                               expected_stdout, expected_success != True,
-                              timer, actual_exitcode, None
-                )
+                              timer, actual_exitcode, None)
 
 		if actual_stdout != expected_stdout:
 			diff = difflib.unified_diff(expected_stdout.splitlines(), 
@@ -92,9 +81,9 @@ class Expected:
                               expected_stdout, expected_success != True,
                               timer, actual_exitcode,
                               "Expected:\n\"\"\"\n%s\"\"\"\nbut actual is:\n\"\"\"\n%s\"\"\"Difference (https://docs.python.org/3/library/difflib.html#difflib.unified_diff): \n%s\n" %  (expected_stdout, actual_stdout, ndiff)
-                )
+            )
 
-		return results.TestResult(True, name, expected_success, stdin, actual_stdout, expected_stdout, expected_success != True, timer, actual_exitcode, None)
+		return results.TestResult(True, name, expected_success, stdin, actual_stdout, expected_stdout, expected_success != True, timer, actual_exitcode)
 
 class Actual(Expected):
 	def __init__(self, stdout: str, stderr: str, exitcode: int):

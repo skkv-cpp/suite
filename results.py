@@ -190,11 +190,17 @@ class CategoryResult():
 class TesterResult():
 	def __init__(self, categories: List[CategoryResult]):
 		self.categories = categories
+		self.passed = sum(category.passed for category in self.categories)
+		self.total = sum(category.total for category in self.categories)
 
 	def is_passed(self):
-		return all(category.passed == len(category.results) for category in self.categories)
+		return self.passed == self.total
 
-	def print(self):
+	def print_groups(self):
+		for category in self.categories:
+			print("%s: %d/%d tests passed in %d ms" % (category.category, category.passed, category.total, category.timer))
+
+	def print_table(self):
 		if len(self.categories) == 0:
 			print("No tests.")
 			return
