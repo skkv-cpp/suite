@@ -38,16 +38,16 @@ class Tester:
 				exit(config.EXIT_FAILURE)
 		return results.CategoryResult(result, self.category)
 
-	def add_fail(self, input: Union[List[str], str], expected_exitcode: int, timeout: int = config.DEFAULT_TIMEOUT, name: str = None):
-		self.add_easy(input, None, expected_exitcode, timeout, name)
+	def add_fail(self, input: Union[List[str], str], expected_exitcode: int, timeout: int = config.DEFAULT_TIMEOUT, name: str = None, categories: List[str] = []):
+		self.add_easy(input, None, expected_exitcode, timeout, name, categories)
 
-	def add_easy(self, input: Union[List[str], str], expected: str, expected_exitcode: int = 0, timeout: int = config.DEFAULT_TIMEOUT, name: str = None):
+	def add_easy(self, input: Union[List[str], str], expected: str, expected_exitcode: int = 0, timeout: int = config.DEFAULT_TIMEOUT, name: str = None, categories: List[str] = []):
 		expected = asserts.Expected(expected, is_success = expected != None, exitcode = expected_exitcode)
-		self.tests.append(self.ctor(input, expected, timeout, name))
+		self.tests.append(self.ctor(input, expected, timeout, name, categories))
 
-	def add_hard(self, input: Union[List[str], str], expected: str, expected_exitcode: int = 0, timeout: int = config.DEFAULT_TIMEOUT, name: str = None):
+	def add_hard(self, input: Union[List[str], str], expected: str, expected_exitcode: int = 0, timeout: int = config.DEFAULT_TIMEOUT, name: str = None, categories: List[str] = []):
 		expected = asserts.Expected(expected, is_sha256 = True, exitcode = expected_exitcode)
-		self.tests.append(self.ctor(input, expected, timeout, name))
+		self.tests.append(self.ctor(input, expected, timeout, name, categories))
 
 class IOTester(Tester):
 	def __init__(self, category: str, filename: str):

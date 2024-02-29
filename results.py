@@ -1,3 +1,5 @@
+import pyperclip
+
 from typing import List
 
 # Util string functions.
@@ -23,7 +25,7 @@ class TestResult():
 	STR_EMPTY_ERROR_TRUE: str = "<empty>"
 	STR_EMPTY_ERROR_FALSE: str = "<not empty>"
 
-	def __init__(self, passed: bool, name: str, is_success: bool, input: str, actual_output: str, expected_output: str, empty_error: bool, timer: int, exitcode: int, error_message: str = None):
+	def __init__(self, passed: bool, name: str, is_success: bool, input: str, actual_output: str, expected_output: str, empty_error: bool, timer: int, exitcode: int, error_message: str = None, categories: List[str] = []):
 		self.passed = passed
 		self.name = "<no name>"
 		if name:
@@ -40,6 +42,7 @@ class TestResult():
 		self.timer = timer
 		self.exitcode = exitcode
 		self.error_message = error_message
+		self.categories = categories
 
 	def __print_end(self, end: bool):
 		if end:
@@ -218,3 +221,18 @@ class TesterResult():
 		for category in self.categories:
 			category.print(width, width_passed, width_name, width_is_success, width_input, width_actual_output, width_expected_output, width_empty_error, width_exitcode, width_timer, header_head)
 			header_head = False
+
+	def print_counts(self, countable_categories: List[str]):
+		if len(self.categories) == 0:
+			print("No counts.")
+			return
+
+		print("\t".join(map(str, countable_categories)))
+
+		counts = [sum(result.passed and count in result.categories for category in self.categories for result in category.results) for count in countable_categories]
+		counts_str = "\t".join(map(str, counts))
+
+		print(counts_str)
+
+		pyperclip.copy(counts_str)
+		print("<copied to clipboard>")
