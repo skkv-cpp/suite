@@ -207,7 +207,7 @@ class TesterResult():
 		width_passed = max(len(CategoryResult.STR_PASSED), max(category.width_passed() for category in self.categories))
 		width_name = max(len(CategoryResult.STR_NAME), max(category.width_name() for category in self.categories))
 		width_is_success = max(len(CategoryResult.STR_IS_SUCCESS), max(category.width_is_success() for category in self.categories))
-		width_input = max(len(CategoryResult.STR_INPUT), max(category.width_is_success() for category in self.categories))
+		width_input = max(len(CategoryResult.STR_INPUT), max(category.width_input() for category in self.categories))
 		width_actual_output = max(len(CategoryResult.STR_ACTUAL_OUTPUT), max(category.width_actual_output() for category in self.categories))
 		width_expected_output = max(len(CategoryResult.STR_EXPECTED_OUTPUT), max(category.width_expected_output() for category in self.categories))
 		width_empty_error = max(len(CategoryResult.STR_EMPTY_ERROR), max(category.width_empty_error() for category in self.categories))

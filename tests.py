@@ -44,7 +44,7 @@ class CmdTest:
 			output, error = program.communicate(timeout = self.timeout)
 			end = time.time_ns() // 1000000
 			result = asserts.Actual(output, error, program.returncode)
-			return self.expected_result.compare(result, end - start, self.name, (' '.join(self.input) + "\n"))
+			return self.expected_result.compare(result, end - start, self.name, (' '.join(self.input)))
 		except subprocess.TimeoutExpired:
 			end = time.time_ns() // 1000000
-			return results.TestResult(False, self.name, self.expected_result.is_success, (' '.join(self.input) + "\n"), None, self.expected_result.stdout, self.expected_result.is_success != True, end - start, "Timeout.")
+			return results.TestResult(False, self.name, self.expected_result.is_success, (' '.join(self.input)), None, self.expected_result.stdout, self.expected_result.is_success != True, end - start, "Timeout.")
