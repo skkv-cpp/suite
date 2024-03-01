@@ -38,6 +38,17 @@ class Tester:
 				exit(config.EXIT_FAILURE)
 		return results.CategoryResult(result, self.category)
 
+	def extract_only(self, categories: List[str]):
+		new_tester = Tester(self.category, self.filename, self.ctor)
+		categoriesS = set(categories)
+		for test in self.tests:
+			if set(test.categories).issubset(categoriesS):
+				new_tester.add_test(test)
+		return new_tester
+
+	def add_test(self, test):
+		self.tests.append(test)
+
 	def add_fail(self, input: Union[List[str], str], expected_exitcode: int, timeout: int = config.DEFAULT_TIMEOUT, name: str = None, categories: List[str] = []):
 		self.add_easy(input, None, expected_exitcode, timeout, name, categories)
 
