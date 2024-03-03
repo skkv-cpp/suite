@@ -229,9 +229,19 @@ class TesterResult():
 
 		print("\t".join(map(str, countable_categories)))
 
-		counts = [sum(result.passed and count in result.categories for category in self.categories for result in category.results) for count in countable_categories]
-		counts_str = "\t".join(map(str, counts))
+		counts = []
+		for count in countable_categories:
+			total = 0
+			passed = 0
+			for category in self.categories:
+				for result in category.results:
+					if count in result.categories:
+						total += 1
+						if result.passed:
+							passed += 1
+			counts.append(passed / total)
 
+		counts_str = "\t".join(map(str, counts))
 		print(counts_str)
 
 		pyperclip.copy(counts_str)
