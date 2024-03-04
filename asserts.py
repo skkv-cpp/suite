@@ -91,7 +91,7 @@ class Expected:
 								expected_success, stdin, actual_stdout,
 								expected_stdout, empty_error,
 								timer, actual_exitcode,
-								"Expected:\n\"\"\"\n%s\"\"\"\nbut actual is:\n\"\"\"\n%s\"\"\"" %  (expected_stdout, actual_stdout), categories = categories)
+								"Expected:\n\"\"\"\n%s\"\"\"\nbut actual is:\n\"\"\"\n%s\"\"\"\n\nSTDERR:\n\"\"\"\n%s\"\"\"" %  (expected_stdout, actual_stdout, actual_stderr), categories = categories)
 
 		return results.TestResult(True, name, expected_success, stdin, actual_stdout, expected_stdout, empty_error, timer, actual_exitcode, categories = categories)
 
