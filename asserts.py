@@ -8,7 +8,7 @@ from suite import results
 # Asserts.
 
 class Expected:
-	def __init__(self, stdout: str = None, stderr: str = None, is_success: bool = True, is_sha256: bool = False, exitcode: int = 0):
+	def __init__(self, stdout: str = None, stderr: str = None, is_success: bool = True, is_sha256: bool = False, exitcode: int = 0, show_diff: bool = False):
 		self.stdout = stdout
 		if stdout and not is_sha256 and not stdout.endswith("\n"):
 			self.stdout += "\n"
@@ -16,6 +16,7 @@ class Expected:
 		self.is_success = is_success
 		self.is_sha256 = is_sha256
 		self.exitcode = exitcode
+		self.show_diff = show_diff
 
 	def compare(self, other: 'Expected', timer: int, name: str, stdin: str, categories: List[str]) -> results.TestResult:
 		expected_stdout = self.stdout
@@ -73,18 +74,24 @@ class Expected:
                               timer, actual_exitcode, categories = categories)
 
 		if actual_stdout != expected_stdout:
-			diff = difflib.unified_diff(expected_stdout.splitlines(), 
+			if self.show_diff:
+				diff = difflib.unified_diff(expected_stdout.splitlines(), 
 										 actual_stdout.splitlines(), 
 										 fromfile = 'expected_stdout', 
 										 tofile = 'actual_stdout')
-			ndiff = '\n'.join(diff)
-			return results.TestResult(False, name,
-                              expected_success, stdin, actual_stdout,
-                              expected_stdout, empty_error,
-                              timer, actual_exitcode,
-                              "Expected:\n\"\"\"\n%s\"\"\"\nbut actual is:\n\"\"\"\n%s\"\"\"Difference (https://docs.python.org/3/library/difflib.html#difflib.unified_diff): \n%s\n" %  (expected_stdout, actual_stdout, ndiff)
-                              , categories = categories
-            )
+				ndiff = '\n'.join(diff)
+				return results.TestResult(False, name,
+								expected_success, stdin, actual_stdout,
+								expected_stdout, empty_error,
+								timer, actual_exitcode,
+								"Expected:\n\"\"\"\n%s\"\"\"\nbut actual is:\n\"\"\"\n%s\"\"\"Difference (https://docs.python.org/3/library/difflib.html#difflib.unified_diff): \n%s\n" %  (expected_stdout, actual_stdout, ndiff)
+								, categories = categories)
+			else:
+				return results.TestResult(False, name,
+								expected_success, stdin, actual_stdout,
+								expected_stdout, empty_error,
+								timer, actual_exitcode,
+								"Expected:\n\"\"\"\n%s\"\"\"\nbut actual is:\n\"\"\"\n%s\"\"\"" %  (expected_stdout, actual_stdout), categories = categories)
 
 		return results.TestResult(True, name, expected_success, stdin, actual_stdout, expected_stdout, empty_error, timer, actual_exitcode, categories = categories)
 

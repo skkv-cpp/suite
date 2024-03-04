@@ -49,14 +49,14 @@ class Tester:
 	def add_test(self, test):
 		self.tests.append(test)
 
-	def add_fail(self, input: Union[List[str], str], expected_exitcode: int, timeout: int = config.DEFAULT_TIMEOUT, name: str = None, categories: List[str] = []):
-		self.add_easy(input, None, expected_exitcode, timeout, name, categories)
+	def add_fail(self, input: Union[List[str], str], expected_exitcode: int, timeout: int = config.DEFAULT_TIMEOUT, name: str = None, categories: List[str] = [], show_diff: bool = False):
+		self.add_easy(input, None, expected_exitcode, timeout, name, categories, show_diff)
 
-	def add_easy(self, input: Union[List[str], str], expected: str, expected_exitcode: int = 0, timeout: int = config.DEFAULT_TIMEOUT, name: str = None, categories: List[str] = []):
-		expected = asserts.Expected(expected, is_success = expected != None, exitcode = expected_exitcode)
+	def add_easy(self, input: Union[List[str], str], expected: str, expected_exitcode: int = 0, timeout: int = config.DEFAULT_TIMEOUT, name: str = None, categories: List[str] = [], show_diff: bool = False):
+		expected = asserts.Expected(expected, is_success = expected != None, exitcode = expected_exitcode, show_diff = show_diff)
 		self.tests.append(self.ctor(input, expected, timeout, name, categories))
 
-	def add_hard(self, input: Union[List[str], str], expected: str, expected_exitcode: int = 0, timeout: int = config.DEFAULT_TIMEOUT, name: str = None, categories: List[str] = []):
+	def add_hard(self, input: Union[List[str], str], expected: str, expected_exitcode: int = 0, timeout: int = config.DEFAULT_TIMEOUT, name: str = None, categories: List[str] = [], show_diff: bool = False):
 		expected = asserts.Expected(expected, is_sha256 = True, exitcode = expected_exitcode)
 		self.tests.append(self.ctor(input, expected, timeout, name, categories))
 
