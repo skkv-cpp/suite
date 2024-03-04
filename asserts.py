@@ -1,5 +1,6 @@
 import hashlib
 import difflib
+import sys
 from typing import List
 
 from suite import config
@@ -33,6 +34,7 @@ class Expected:
 			return results.TestResult(False, name, expected_success, stdin, actual_stdout, expected_stdout, expected_success != True, timer, actual_exitcode, "Program returns ERROR_CODE = 0.")
 
 		if expected_success and not actual_success:
+			print("===> FAILING... STDERR:\n\"\"\"\n%s\"\"\"" % actual_stderr, file = sys.stderr)
 			return results.TestResult(False, name,
                               expected_success, stdin, actual_stdout,
                               expected_stdout, expected_success != True,
@@ -45,11 +47,13 @@ class Expected:
                             expected_stdout, empty_error,
                             timer, actual_exitcode, "Standard error output is empty.", categories = categories)
 			if actual_stdout != None and actual_stdout != "":
+				print("====> FAILING... STDERR:\n\"\"\"\n%s\"\"\"" % actual_stderr, file = sys.stderr)
 				return results.TestResult(False, name,
                               expected_success, stdin, actual_stdout,
                               expected_stdout, empty_error,
                               timer, actual_exitcode, "On error program should not writing anything to standard output.", categories = categories)
 			if actual_exitcode != expected_exitcode:
+				print("====> FAILING... STDERR:\n\"\"\"\n%s\"\"\"" % actual_stderr, file = sys.stderr)
 				return results.TestResult(False, name,
                               expected_success, stdin, actual_stdout,
                               expected_stdout, empty_error,
@@ -87,11 +91,12 @@ class Expected:
 								"Expected:\n\"\"\"\n%s\"\"\"\nbut actual is:\n\"\"\"\n%s\"\"\"Difference (https://docs.python.org/3/library/difflib.html#difflib.unified_diff): \n%s\n" %  (expected_stdout, actual_stdout, ndiff)
 								, categories = categories)
 			else:
+				print("====> FAILING... STDERR:\n\"\"\"\n%s\"\"\"" % actual_stderr, file = sys.stderr)
 				return results.TestResult(False, name,
 								expected_success, stdin, actual_stdout,
 								expected_stdout, empty_error,
 								timer, actual_exitcode,
-								"Expected:\n\"\"\"\n%s\"\"\"\nbut actual is:\n\"\"\"\n%s\"\"\"\n\nSTDERR:\n\"\"\"\n%s\"\"\"" %  (expected_stdout, actual_stdout, actual_stderr), categories = categories)
+								"Expected:\n\"\"\"\n%s\"\"\"\nbut actual is:\n\"\"\"\n%s\"\"\"" %  (expected_stdout, actual_stdout), categories = categories)
 
 		return results.TestResult(True, name, expected_success, stdin, actual_stdout, expected_stdout, empty_error, timer, actual_exitcode, categories = categories)
 
