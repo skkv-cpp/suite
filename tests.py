@@ -27,6 +27,7 @@ class IOTest:
 			result = asserts.Actual(output, error, program.returncode)
 			return self.expected_result.compare(result, end - start, self.name, self.input.decode("ascii"), self.categories)
 		except subprocess.TimeoutExpired:
+			program.kill()
 			end = time.time_ns() // 1000000
 			return results.TestResult(False, self.name, self.expected_result.is_success, self.input.decode("ascii"), None, self.expected_result.stdout, self.expected_result.is_success != True, end - start, "Timeout.", categories = self.categories)
 
@@ -48,5 +49,6 @@ class CmdTest:
 			result = asserts.Actual(output, error, program.returncode)
 			return self.expected_result.compare(result, end - start, self.name, (' '.join(self.input)), self.categories)
 		except subprocess.TimeoutExpired:
+			program.kill()
 			end = time.time_ns() // 1000000
 			return results.TestResult(False, self.name, self.expected_result.is_success, (' '.join(self.input)), None, self.expected_result.stdout, self.expected_result.is_success != True, end - start, "Timeout.", categories = self.categories)
