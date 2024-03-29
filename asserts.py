@@ -1,23 +1,53 @@
 import hashlib
 import difflib
 import sys
-from typing import List
+from typing import List, Union, Tuple
 
+from suite import tools
 from suite import config
 from suite import results
 
 # Asserts.
 
 class Expected:
-	def __init__(self, stdout: str = None, stderr: str = None, is_success: bool = True, is_sha256: bool = False, exitcode: int = 0, show_diff: bool = False):
-		self.stdout = stdout
-		if stdout and not is_sha256 and not stdout.endswith("\n"):
-			self.stdout += "\n"
+	def __init__(self, stdout: Union[List[str], str] = None, stderr: str = None, is_success: bool = True, is_sha256: bool = False, exitcode: int = 0, show_diff: bool = False):
+		self.stdout: Union[List[str], str] = None
+		if stdout and not is_sha256:
+			if isinstance(stdout, str):
+				self.stdout = stdout + ("\n" if not stdout.endswith("\n") else "")
+			else:
+				self.stdout = [out + "\n" if not out.endswith("\n") else out for out in stdout]
 		self.stderr = stderr
 		self.is_success = is_success
 		self.is_sha256 = is_sha256
 		self.exitcode = exitcode
 		self.show_diff = show_diff
+
+	def __compare_single(self, actual: str, expected: str, show_diff: bool) -> Tuple[bool, str]:
+		if actual == expected:
+			return True, None
+
+		if show_diff:
+			diff = difflib.unified_diff(
+				expected.splitlines(), actual.splitlines(),
+				fromfile = 'expected_stdout', tofile = 'actual_stdout'
+			)
+			ndiff = '\n'.join(diff)
+			return False, "Expected:\n\"\"\"\n%s\"\"\"\nbut actual is:\n\"\"\"\n%s\"\"\"Difference (https://docs.python.org/3/library/difflib.html#difflib.unified_diff): \n%s\n" %  (expected, actual, ndiff)
+		else:
+			return False, "Expected:\n\"\"\"\n%s\"\"\"\nbut actual is:\n\"\"\"\n%s\"\"\"" %  (expected, actual)
+
+	def __compare_multi(self, actual: str, expected: List[str]) -> Tuple[bool, str]:
+		if any(elem == actual for elem in expected):
+			return True, None
+
+		return False, "None of %s was asserted with %s" % ("[one of ===> " + tools.escape_multi_or(expected) + "]", "[actual ===> " + actual.rstrip() + "]")
+
+	def __compare_impl(self, actual: str, expected: Union[List[str], str], show_diff: bool) -> Tuple[bool, str]:
+		if isinstance(expected, str):
+			return self.__compare_single(actual, expected, show_diff)
+		else:
+			return self.__compare_multi(actual, expected)
 
 	def compare(self, other: 'Expected', timer: int, name: str, stdin: str, categories: List[str]) -> results.TestResult:
 		expected_stdout = self.stdout
@@ -77,28 +107,10 @@ class Expected:
                               expected_stdout, empty_error,
                               timer, actual_exitcode, categories = categories)
 
-		if actual_stdout != expected_stdout:
-			if self.show_diff:
-				diff = difflib.unified_diff(expected_stdout.splitlines(), 
-										 actual_stdout.splitlines(), 
-										 fromfile = 'expected_stdout', 
-										 tofile = 'actual_stdout')
-				ndiff = '\n'.join(diff)
-				return results.TestResult(False, name,
-								expected_success, stdin, actual_stdout,
-								expected_stdout, empty_error,
-								timer, actual_exitcode,
-								"Expected:\n\"\"\"\n%s\"\"\"\nbut actual is:\n\"\"\"\n%s\"\"\"Difference (https://docs.python.org/3/library/difflib.html#difflib.unified_diff): \n%s\n" %  (expected_stdout, actual_stdout, ndiff)
-								, categories = categories)
-			else:
-				print("====> FAILING \"%s\"... STDERR:\n\"\"\"\n%s\"\"\"" % (name, actual_stderr), file = sys.stderr)
-				return results.TestResult(False, name,
-								expected_success, stdin, actual_stdout,
-								expected_stdout, empty_error,
-								timer, actual_exitcode,
-								"Expected:\n\"\"\"\n%s\"\"\"\nbut actual is:\n\"\"\"\n%s\"\"\"" %  (expected_stdout, actual_stdout), categories = categories)
-
-		return results.TestResult(True, name, expected_success, stdin, actual_stdout, expected_stdout, empty_error, timer, actual_exitcode, categories = categories)
+		ok, err = self.__compare_impl(actual_stdout, expected_stdout, self.show_diff)
+		if not ok:
+			print("====> FAILING \"%s\"... STDERR:\n\"\"\"\n%s\"\"\"" % (name, actual_stderr), file = sys.stderr)
+		return results.TestResult(ok, name, expected_success, stdin, actual_stdout, expected_stdout, empty_error, timer, actual_exitcode, err, categories)
 
 class Actual(Expected):
 	def __init__(self, stdout: str, stderr: str, exitcode: int):

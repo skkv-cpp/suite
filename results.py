@@ -1,19 +1,7 @@
 import pyperclip
+from typing import List, Union
 
-from typing import List
-
-# Util string functions.
-
-def escape(raw: str) -> str:
-	escaped = ""
-	for c in raw:
-		match c:
-			case '\t': escaped += "\\t"
-			case '\n': escaped += "\\n"
-			case '\r': escaped += "\\r"
-			case '\\': escaped += "\\\\"
-			case _: escaped += c
-	return escaped
+from suite import tools
 
 # Results.
 
@@ -25,19 +13,22 @@ class TestResult():
 	STR_EMPTY_ERROR_TRUE: str = "<empty>"
 	STR_EMPTY_ERROR_FALSE: str = "<not empty>"
 
-	def __init__(self, passed: bool, name: str, is_success: bool, input: str, actual_output: str, expected_output: str, empty_error: bool, timer: int, exitcode: int, error_message: str = None, categories: List[str] = []):
+	def __init__(self, passed: bool, name: str, is_success: bool, input: str, actual_output: str, expected_output: Union[List[str], str], empty_error: bool, timer: int, exitcode: int, error_message: str = None, categories: List[str] = []):
 		self.passed = passed
 		self.name = "<no name>"
 		if name:
 			self.name = name
 		self.is_success = is_success
-		self.input = escape(input)
+		self.input = tools.escape(input)
 		self.actual_output = "<no output>"
 		if actual_output:
-			self.actual_output = escape(actual_output)
+			self.actual_output = tools.escape(actual_output)
 		self.expected_output = "<no reference>"
 		if expected_output:
-			self.expected_output = escape(expected_output)
+			if isinstance(expected_output, str):
+				self.expected_output = tools.escape(expected_output)
+			else:
+				self.expected_output = tools.escape_multi_or(expected_output)
 		self.empty_error = empty_error
 		self.timer = timer
 		self.exitcode = exitcode
