@@ -207,10 +207,12 @@ class CmdTest:
 			return self.expected.compare(actual, timer)
 		except subprocess.TimeoutExpired:
 			program.kill()
-			return TestResult(Errno.ERROR_TIMEOUT, self.expected.categories)
-		except Exception:
+			end = get_time()
+			return TestResult(Errno.ERROR_TIMEOUT, self.expected.categories, end - start)
+		except Exception as err:
 			program.kill()
-			return TestResult(Errno.ERROR_UNKNOWN, self.expected.categories)
+			end = get_time()
+			return TestResult(Errno.ERROR_UNKNOWN, self.expected.categories, end - start, str(err))
 
 class CategoryResult:
 	def __init__(self, category: str, tests: List[TestResult], timer: int):
