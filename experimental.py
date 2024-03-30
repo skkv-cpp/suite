@@ -236,6 +236,16 @@ class RegexTester:
 		self.regex_pattern = regex_pattern
 		self.tests: List[CmdTest] = []
 
+	def is_empty(self) -> bool:
+		return len(self.tests) == 0
+
+	def extract_only(self, categories: Set[str]) -> 'RegexTester':
+		new_tester = RegexTester(self.category, self.filename, self.regex_pattern)
+		for test in self.tests:
+			if test.expected.categories.issubset(categories):
+				new_tester.tests.append(test)
+		return new_tester
+
 	def run(self) -> CategoryResult:
 		result = []
 		start = get_time()
@@ -326,6 +336,15 @@ class AllTester:
 	def add(self, tester: RegexTester) -> 'AllTester':
 		self.testers.append(tester)
 		return self
+
+	def extract_only(self, categories: List[str]):
+		cats = set(categories)
+		new_testers = []
+		for tester in self.testers:
+			new_tester = tester.extract_only(cats)
+			if not new_tester.is_empty():
+				new_testers.append(new_tester)
+		self.testers = new_testers
 
 	def run(self) -> AllResult:
 		start = get_time()
