@@ -263,7 +263,7 @@ class RegexTester:
 				print("===> FAILED")
 				print("====> ERROR: %s." % (test_result.str_error()))
 				if not test_result.empty_stderr():
-					print("[stderr %d]: %s" % (str(n_test), test_result.stderr), file = sys.stderr)
+					print("[stderr %s]: %s" % (str(n_test), test_result.stderr), file = sys.stderr)
 			result.append(test_result)
 		end = get_time()
 		return CategoryResult(self.category, result, end - start)
