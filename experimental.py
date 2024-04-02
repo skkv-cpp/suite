@@ -251,8 +251,10 @@ class RegexTester:
 		start = get_time()
 		print("=> Test suite: \"%s\" tests." % (self.category))
 		for i, test in enumerate(self.tests):
-			n_test = i + 1
-			print("==> Running test %d" % (n_test))
+			n_test: Union[str, int] = test.name
+			if n_test is None:
+				n_test = i + 1
+			print("==> Running test %s" % (str(n_test)))
 			test_result = test.run(self.filename)
 			if test_result.is_pass:
 				print("===> SUCCESS in %d ms" % (test_result.timer))
@@ -260,12 +262,12 @@ class RegexTester:
 				print("===> FAILED")
 				print("====> ERROR: %s." % (test_result.str_error()))
 				if not test_result.empty_stderr():
-					print("[stderr %d]: %s" % (n_test, test_result.stderr))
+					print("[stderr %d]: %s" % (str(n_test), test_result.stderr))
 			result.append(test_result)
 		end = get_time()
 		return CategoryResult(self.category, result, end - start)
 
-	def __add_test(self, input: List[str], expected: Union[List[ExpectedT], List[ExpectedRawT]], fails: bool, timeout: int, exitcode: int, categories: List[str]) -> 'RegexTester':
+	def __add_test(self, input: List[str], expected: Union[List[ExpectedT], List[ExpectedRawT]], fails: bool, timeout: int, exitcode: int, categories: List[str], name: str) -> 'RegexTester':
 		expected_list = None
 		if expected is not None:
 			if all(isinstance(item, ExpectedT) for item in expected):
@@ -273,14 +275,14 @@ class RegexTester:
 			else:
 				expected_list = expected_from_array(expected)
 		expected_object = Expected(self.regex_pattern, expected_list, fails, exitcode, set(categories))
-		self.tests.append(CmdTest(input, expected_object, timeout, None))
+		self.tests.append(CmdTest(input, expected_object, timeout, name))
 		return self
 
-	def add_pass(self, input: List[str], expected: Union[List[ExpectedT], List[ExpectedRawT]], categories: List[str] = [], timeout: int = config.DEFAULT_TIMEOUT) -> 'RegexTester':
-		return self.__add_test(input, expected, False, timeout, config.ERROR_SUCCESS, categories)
+	def add_pass(self, input: List[str], expected: Union[List[ExpectedT], List[ExpectedRawT]], name: str = None, categories: List[str] = [], timeout: int = config.DEFAULT_TIMEOUT) -> 'RegexTester':
+		return self.__add_test(input, expected, False, timeout, config.ERROR_SUCCESS, categories, name)
 
-	def add_fail(self, input: List[str], exitcode: int, categories: List[str] = [], timeout: int = config.DEFAULT_TIMEOUT) -> 'RegexTester':
-		return self.__add_test(input, None, True, timeout, exitcode, categories)
+	def add_fail(self, input: List[str], exitcode: int, name: str = None, categories: List[str] = [], timeout: int = config.DEFAULT_TIMEOUT) -> 'RegexTester':
+		return self.__add_test(input, None, True, timeout, exitcode, categories, name)
 
 class AllResult:
 	def __init__(self, results: List[CategoryResult], timer: int):
