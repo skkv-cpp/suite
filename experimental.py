@@ -177,7 +177,7 @@ class Expected:
 
 		# CASE: Should not fail, but program doesn't returns 0.
 		if not self.fails and actual.error:
-			return TestResult(Errno.ERROR_SHOULD_PASS, stderr = actual.stderr, actual_exitcode = actual.exitcode)
+			return TestResult(Errno.ERROR_SHOULD_PASS, self.categories, timer, stderr = actual.stderr, actual_exitcode = actual.exitcode)
 
 		# CASE: Should fail, then check stdout, stderr and exitcode.
 		#                    otherwise, compare with expected.
