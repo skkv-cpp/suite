@@ -129,62 +129,62 @@ class Expected:
 		self.exitcode = exitcode
 		self.categories = categories
 
-	def __compare_failed(self, actual: Actual, timer: int) -> TestResult:
+	def __compare_failed(self, actual: Actual, timer_test: int) -> TestResult:
 		empty_stderr = actual.stderr == "" or actual.stderr is None
 		empty_stdout = actual.stdout == "" or actual.stdout is None
 
 		# CASE: If should fail, then should be error message.
 		if empty_stderr:
-			return TestResult(Errno.ERROR_STDERR_EMPTY, self.categories, timer)
+			return TestResult(errno = Errno.ERROR_STDERR_EMPTY, categories = self.categories, timer = timer_test)
 
 		# CASE: If should fail, then output should be empty.
 		if not empty_stdout:
-			return TestResult(Errno.ERROR_STDOUT_NOT_EMPTY, self.categories, timer, stderr = actual.stderr)
+			return TestResult(errno = Errno.ERROR_STDOUT_NOT_EMPTY, categories = self.categories, timer = timer_test, stderr = actual.stderr)
 
 		# CASE: If should fail, then exitcode must be correct.
 		if actual.exitcode != self.exitcode:
-			return TestResult(Errno.ERROR_EXITCODE, self.categories, timer, stderr = actual.stderr, actual_exitcode = actual.exitcode, expected_exitcode = self.exitcode)
+			return TestResult(errno = Errno.ERROR_EXITCODE, categories = self.categories, timer = timer_test, stderr = actual.stderr, actual_exitcode = actual.exitcode, expected_exitcode = self.exitcode)
 
 		# Otherwise: test passed.
-		return TestResult(Errno.ERROR_SUCCESS, self.categories, timer)
+		return TestResult(errno = Errno.ERROR_SUCCESS, categories = self.categories, timer = timer_test)
 
-	def __compare_passes(self, actual: Actual, timer: int) -> TestResult:
+	def __compare_passes(self, actual: Actual, timer_test: int) -> TestResult:
 		empty_stderr = actual.stderr == "" or actual.stderr is None
 		matches = re.search(self.regex_pattern, actual.stdout)
 
 		# CASE: If should pass, then error output should be empty.
 		if not empty_stderr:
-			return TestResult(Errno.ERROR_STDERR_NOT_EMPTY, self.categories, timer, stderr = actual.stderr)
+			return TestResult(errno = Errno.ERROR_STDERR_NOT_EMPTY, categories = self.categories, timer = timer_test, stderr = actual.stderr)
 
 		# CASE: If should pass, then regular expression should matching.
 		if matches is None:
-			return TestResult(Errno.ERROR_OUTPUT_FORMAT, self.categories, timer)
+			return TestResult(errno = Errno.ERROR_OUTPUT_FORMAT, categories = self.categories, timer = timer_test)
 
 		# CASE: If should pass, then values should be in Strict or Range assert.
 		for i in range(len(self.expected)):
 			raw_value = matches.group(i + 1)
 			expected_value = self.expected[i]
 			if expected_value != raw_value:
-				return TestResult(Errno.ERROR_ASSERTION, self.categories, timer, assert_pos = i, actual_assert = raw_value, expected_assert = expected_value.to_string())
+				return TestResult(errno = Errno.ERROR_ASSERTION, categories = self.categories, timer = timer_test, assert_pos = i, actual_assert = raw_value, expected_assert = expected_value.to_string())
 
 		# Otherwise: test passed.
-		return TestResult(Errno.ERROR_SUCCESS, self.categories, timer)
+		return TestResult(errno = Errno.ERROR_SUCCESS, categories = self.categories, timer = timer_test)
 
-	def compare(self, actual: Actual, timer: int) -> TestResult:
+	def compare(self, actual: Actual, timer_test: int) -> TestResult:
 		# CASE: Should fail, but program returns 0.
 		if self.fails and not actual.error:
-			return TestResult(Errno.ERROR_SHOULD_FAIL, self.categories, timer)
+			return TestResult(errno = Errno.ERROR_SHOULD_FAIL, categories = self.categories, timer = timer_test)
 
 		# CASE: Should not fail, but program doesn't returns 0.
 		if not self.fails and actual.error:
-			return TestResult(Errno.ERROR_SHOULD_PASS, self.categories, timer, stderr = actual.stderr, actual_exitcode = actual.exitcode)
+			return TestResult(errno = Errno.ERROR_SHOULD_PASS, categories = self.categories, timer = timer_test, stderr = actual.stderr, actual_exitcode = actual.exitcode)
 
 		# CASE: Should fail, then check stdout, stderr and exitcode.
 		#                    otherwise, compare with expected.
 		if self.fails:
-			return self.__compare_failed(actual, timer)
+			return self.__compare_failed(actual, timer_test)
 
-		return self.__compare_passes(actual, timer)
+		return self.__compare_passes(actual, timer_test)
 
 def get_time() -> int:
 	return time.time_ns() // 1000000
@@ -209,11 +209,11 @@ class CmdTest:
 		except subprocess.TimeoutExpired:
 			program.kill()
 			end = get_time()
-			return TestResult(Errno.ERROR_TIMEOUT, self.expected.categories, end - start)
+			return TestResult(errno = Errno.ERROR_TIMEOUT, categories = self.expected.categories, timer = end - start)
 		except Exception as err:
 			program.kill()
 			end = get_time()
-			return TestResult(Errno.ERROR_UNKNOWN, self.expected.categories, end - start, str(err))
+			return TestResult(errno = Errno.ERROR_UNKNOWN, categories = self.expected.categories, timer = end - start, stderr = str(err))
 
 class CategoryResult:
 	def __init__(self, category: str, tests: List[TestResult], timer: int):
