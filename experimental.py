@@ -84,7 +84,7 @@ class Errno(Enum):
 	ERROR_UNKNOWN = 10
 
 class TestResult:
-	def __init__(self, errno: Errno, categories: Set[str], timer: int, stderr: str = None, expected_exitcode: int = None, actual_exitcode: int = None, assert_pos: int = None, actual_assert: str = None, expected_assert: str = None):
+	def __init__(self, errno: Errno, categories: Set[str], timer: int, stderr: str = None, expected_exitcode: Set[int] = None, actual_exitcode: int = None, assert_pos: int = None, actual_assert: str = None, expected_assert: str = None):
 		self.is_pass = errno == Errno.ERROR_SUCCESS
 		self.errno = errno
 		self.categories = categories
@@ -104,7 +104,7 @@ class TestResult:
 			case Errno.ERROR_STDERR_EMPTY: return "standard error output is empty"
 			case Errno.ERROR_STDOUT_NOT_EMPTY: return "on error program should not writing anything to standard output"
 			case Errno.ERROR_STDERR_NOT_EMPTY: return "on successful program should not writing anything to standard error output"
-			case Errno.ERROR_EXITCODE: return "program returns %d, but should return %d" % (self.actual_exitcode, self.expected_exitcode)
+			case Errno.ERROR_EXITCODE: return "program returns %d, but should return one of %s" % (self.actual_exitcode, str(self.expected_exitcode))
 			case Errno.ERROR_ASSERTION: return "assert at extracted positional value [%d] => [actual = %s] vs [expected = %s]" % (self.assert_pos, tools.escape(self.actual_assert), self.expected_assert)
 			case Errno.ERROR_OUTPUT_FORMAT: return "output format is incorrect"
 			case Errno.ERROR_TIMEOUT: return "timeout"
@@ -122,11 +122,17 @@ class Actual:
 		self.error = exitcode != 0
 
 class Expected:
-	def __init__(self, regex_pattern: str, expected: List[ExpectedT], fails: bool, exitcode: int, categories: Set[str]):
+	def __init__(self, regex_pattern: str, expected: List[ExpectedT], fails: bool, exitcode: Union[int, List[int]], categories: Set[str]):
 		self.regex_pattern = regex_pattern
 		self.expected = expected
 		self.fails = fails
-		self.exitcode = exitcode
+		self.exitcode: Set[int] = None
+		if isinstance(exitcode, int):
+			self.exitcode = {exitcode}
+		elif isinstance(exitcode, list):
+			self.exitcode = set(exitcode)
+		else:
+			raise ValueError("Expected as int, or List[int] as exitcode.")
 		self.categories = categories
 
 	def __compare_failed(self, actual: Actual, timer_test: int) -> TestResult:
@@ -142,7 +148,7 @@ class Expected:
 			return TestResult(errno = Errno.ERROR_STDOUT_NOT_EMPTY, categories = self.categories, timer = timer_test, stderr = actual.stderr)
 
 		# CASE: If should fail, then exitcode must be correct.
-		if actual.exitcode != self.exitcode:
+		if not actual.exitcode in self.exitcode:
 			return TestResult(errno = Errno.ERROR_EXITCODE, categories = self.categories, timer = timer_test, stderr = actual.stderr, actual_exitcode = actual.exitcode, expected_exitcode = self.exitcode)
 
 		# Otherwise: test passed.
@@ -268,7 +274,7 @@ class RegexTester:
 		end = get_time()
 		return CategoryResult(self.category, result, end - start)
 
-	def __add_test(self, input: List[str], expected: Union[List[ExpectedT], List[ExpectedRawT]], fails: bool, timeout: int, exitcode: int, categories: List[str], name: str) -> 'RegexTester':
+	def __add_test(self, input: List[str], expected: Union[List[ExpectedT], List[ExpectedRawT]], fails: bool, timeout: int, exitcode: Union[int, List[int]], categories: List[str], name: str) -> 'RegexTester':
 		expected_list = None
 		if expected is not None:
 			if all(isinstance(item, ExpectedT) for item in expected):
@@ -282,7 +288,7 @@ class RegexTester:
 	def add_pass(self, input: List[str], expected: Union[List[ExpectedT], List[ExpectedRawT]], name: str = None, categories: List[str] = [], timeout: int = config.DEFAULT_TIMEOUT) -> 'RegexTester':
 		return self.__add_test(input, expected, False, timeout, config.ERROR_SUCCESS, categories, name)
 
-	def add_fail(self, input: List[str], exitcode: int, name: str = None, categories: List[str] = [], timeout: int = config.DEFAULT_TIMEOUT) -> 'RegexTester':
+	def add_fail(self, input: List[str], exitcode: Union[int, List[int]], name: str = None, categories: List[str] = [], timeout: int = config.DEFAULT_TIMEOUT) -> 'RegexTester':
 		return self.__add_test(input, None, True, timeout, exitcode, categories, name)
 
 class AllResult:
