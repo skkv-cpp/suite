@@ -338,6 +338,12 @@ class AllResult:
 	def show_total(self):
 		print("%d/%d tests passed in %d ms." % (self.__get_passed(), self.__get_total(), self.timer))
 
+	def get_passed(self):
+		return self.__get_passed()
+
+	def get_total(self):
+		return self.__get_total()
+
 class AllTester:
 	def __init__(self):
 		self.testers: List[RegexTester] = []
