@@ -1,5 +1,5 @@
 import pyperclip
-from typing import List, Union
+from typing import List, Union, Dict
 
 from suite import tools
 
@@ -212,6 +212,24 @@ class TesterResult():
 		for category in self.categories:
 			category.print(width, width_passed, width_name, width_is_success, width_input, width_actual_output, width_expected_output, width_empty_error, width_exitcode, width_timer, header_head)
 			header_head = False
+
+	def make_bash_envs(self, countable_categories: Dict[str, str], filename: str):
+		if len(self.categories) == 0:
+			print("No counts.")
+			return
+
+		with open(filename, "w") as file_vars:
+			for count, varname in countable_categories:
+				total = 0
+				passed = 0
+				for category in self.categories:
+					for result in category.results:
+						if count in result.categories:
+							total += 1
+							if result.passed:
+								passed += 1
+				final_result = passed / total
+				file_vars.write("%s=%f\n" % (varname.upper(), final_result))
 
 	def print_counts(self, countable_categories: List[str]):
 		if len(self.categories) == 0:
