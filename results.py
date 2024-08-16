@@ -219,7 +219,7 @@ class TesterResult():
 			return
 
 		with open(filename, "w") as file_vars:
-			for count, varname in countable_categories:
+			for count, varname in countable_categories.items():
 				total = 0
 				passed = 0
 				for category in self.categories:
