@@ -5,7 +5,7 @@ import subprocess
 import re
 import pyperclip
 from enum import Enum
-from typing import List, Union, Tuple, Set
+from typing import List, Union, Tuple, Set, Dict
 
 from suite import config
 from suite import tools
@@ -301,6 +301,23 @@ class AllResult:
 
 	def __get_passed(self) -> int:
 		return sum(result.passed() for result in self.results)
+
+	def make_bash_envs(self, countable_categories: Dict[str, str], filename: str):
+		if countable_categories is None or len(countable_categories) == 0 or len(self.results) == 0:
+			return
+
+		with open(filename, "w") as file_vars:
+			for count, varname in countable_categories.items():
+				total = 0
+				passed = 0
+				for category in self.results:
+					for result in category.tests:
+						if count in result.categories:
+							total += 1
+							if result.is_pass:
+								passed += 1
+				final_result = passed / total
+				file_vars.write("%s=%f\n" % (varname.upper(), final_result))
 
 	def clip_coefficients(self, categories: List[str] = None):
 		if categories is None or len(categories) == 0 or len(self.results) == 0:
